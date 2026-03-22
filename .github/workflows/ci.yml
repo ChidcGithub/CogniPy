@@ -118,6 +118,9 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Install dependencies
+        run: pip install -e .
+
       - name: Get version
         id: version
         run: |
