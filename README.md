@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/github/license/ChidcGithub/CogniPy)](LICENSE)
 [![Build Status](https://github.com/ChidcGithub/CogniPy/actions/workflows/ci.yml/badge.svg)](https://github.com/ChidcGithub/CogniPy/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/codecov/c/github/ChidcGithub/CogniPy.svg)](https://codecov.io/gh/ChidcGithub/CogniPy)
-[![Code Quality](https://img.shields.io/lgtm/grade/python/g/ChidcGithub/CogniPy.svg)](https://lgtm.com/projects/g/ChidcGithub/CogniPy/)
 
 **AI-Native Python Language Extension**
 
