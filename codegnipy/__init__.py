@@ -86,6 +86,8 @@ from .providers import (
     BaseProvider,
     OpenAIProvider,
     AnthropicProvider,
+    OllamaProvider,
+    TransformersProvider,
     ProviderFactory,
     create_provider
 )
@@ -169,6 +171,8 @@ __all__ = [
     "BaseProvider",
     "OpenAIProvider",
     "AnthropicProvider",
+    "OllamaProvider",
+    "TransformersProvider",
     "ProviderFactory",
     "create_provider",
     # Validation

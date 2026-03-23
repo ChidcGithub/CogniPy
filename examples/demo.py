@@ -16,8 +16,8 @@ from codegnipy import cognitive, CognitiveContext
 
 def main():
     # 方式 1: 使用 ~ 操作符（需要通过 codegnipy run 执行）
-    # result = ~"用一句话解释什么是递归"
-    # print(f"LLM 回答: {result}")
+    result = ~"用一句话解释什么是递归"
+    print(f"LLM 回答: {result}")
     
     # 方式 2: 使用 cognitive_call 直接调用
     with CognitiveContext(model="gpt-4o-mini"):
