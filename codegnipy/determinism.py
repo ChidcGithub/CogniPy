@@ -16,6 +16,7 @@ from pydantic import BaseModel, ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
     from .runtime import CognitiveContext
+    from .validation import BaseValidator
 
 
 T = TypeVar('T')
@@ -389,9 +390,16 @@ class HallucinationDetector:
     幻觉检测器
 
     检测 LLM 输出中可能存在的幻觉内容。
+    支持外部验证器集成以增强检测准确率。
     """
 
-    def __init__(self):
+    def __init__(self, external_validator: Optional["BaseValidator"] = None):
+        """
+        初始化幻觉检测器
+        
+        参数:
+            external_validator: 外部验证器实例（可选）
+        """
         self._patterns = [
             # 常见幻觉模式
             (r'\b\d{4}年\d{1,2}月\d{1,2}日\b', "可能是虚构的日期"),
@@ -400,14 +408,17 @@ class HallucinationDetector:
             (r'研究表明|研究显示|据统计', "未引用具体来源的声明"),
             (r'众所周知|显然|毫无疑问', "可能缺乏证据支持的断言"),
         ]
+        self._external_validator = external_validator
 
-    def check(self, response: str, context: Optional[Dict[str, Any]] = None) -> HallucinationCheck:
+    def check(self, response: str, context: Optional[Dict[str, Any]] = None, 
+              use_external: bool = False) -> HallucinationCheck:
         """
         检查响应中的幻觉
 
         参数:
             response: LLM 响应文本
             context: 可选的上下文信息
+            use_external: 是否使用外部验证器
         返回:
             HallucinationCheck 对象
         """
@@ -434,6 +445,87 @@ class HallucinationDetector:
                 reasons.append("提到引用但未提供具体引用格式")
                 hallucination_score += 0.15
 
+        # 外部验证（可选）
+        external_result = None
+        if use_external and self._external_validator and self._external_validator.is_available():
+            try:
+                from .validation import ExternalValidationStatus
+                external_result = self._external_validator.validate(response)
+                
+                if external_result.status == ExternalValidationStatus.REFUTED:
+                    hallucination_score += 0.3
+                    reasons.append(f"外部验证器反驳: {external_result.summary}")
+                elif external_result.status == ExternalValidationStatus.VERIFIED:
+                    hallucination_score = max(0, hallucination_score - 0.2)
+                    suggestions.append(f"外部验证器确认: {external_result.summary}")
+            except Exception as e:
+                reasons.append(f"外部验证失败: {str(e)}")
+
+        # 计算置信度
+        confidence = min(hallucination_score, 1.0)
+        is_hallucination = confidence > 0.3
+
+        if is_hallucination:
+            suggestions.append("建议验证响应中的具体细节")
+            suggestions.append("考虑使用反思循环进行二次确认")
+
+        return HallucinationCheck(
+            is_hallucination=is_hallucination,
+            confidence=confidence,
+            reasons=reasons,
+            suggestions=suggestions
+        )
+    
+    async def check_async(self, response: str, context: Optional[Dict[str, Any]] = None,
+                          use_external: bool = True) -> HallucinationCheck:
+        """
+        异步检查响应中的幻觉（支持异步外部验证）
+        
+        参数:
+            response: LLM 响应文本
+            context: 可选的上下文信息
+            use_external: 是否使用外部验证器
+        返回:
+            HallucinationCheck 对象
+        """
+        reasons: List[str] = []
+        suggestions: List[str] = []
+        hallucination_score = 0.0
+
+        # 模式检查
+        for pattern, description in self._patterns:
+            matches = re.findall(pattern, response)
+            if matches:
+                reasons.append(f"{description}: 发现 {len(matches)} 处")
+                hallucination_score += 0.2 * len(matches)
+
+        # 数值一致性检查
+        numbers = re.findall(r'\b\d+(?:\.\d+)?\b', response)
+        if len(numbers) > 5:
+            reasons.append("包含大量数字，请验证准确性")
+            hallucination_score += 0.1
+
+        # 引用检查
+        if '引用' in response or '参考' in response:
+            if not re.search(r'\[\d+\]|\(\d{4}\)|"([^"]+)"', response):
+                reasons.append("提到引用但未提供具体引用格式")
+                hallucination_score += 0.15
+
+        # 异步外部验证
+        if use_external and self._external_validator and self._external_validator.is_available():
+            try:
+                from .validation import ExternalValidationStatus
+                external_result = await self._external_validator.validate_async(response)
+                
+                if external_result.status == ExternalValidationStatus.REFUTED:
+                    hallucination_score += 0.3
+                    reasons.append(f"外部验证器反驳: {external_result.summary}")
+                elif external_result.status == ExternalValidationStatus.VERIFIED:
+                    hallucination_score = max(0, hallucination_score - 0.2)
+                    suggestions.append(f"外部验证器确认: {external_result.summary}")
+            except Exception as e:
+                reasons.append(f"外部验证失败: {str(e)}")
+
         # 计算置信度
         confidence = min(hallucination_score, 1.0)
         is_hallucination = confidence > 0.3
@@ -452,6 +544,15 @@ class HallucinationDetector:
     def add_pattern(self, pattern: str, description: str):
         """添加自定义幻觉检测模式"""
         self._patterns.append((pattern, description))
+    
+    def set_external_validator(self, validator: "BaseValidator") -> None:
+        """
+        设置外部验证器
+        
+        参数:
+            validator: 外部验证器实例
+        """
+        self._external_validator = validator
 
 
 # ============ 确定性认知调用 ============

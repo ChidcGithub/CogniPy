@@ -89,6 +89,19 @@ from .providers import (
     ProviderFactory,
     create_provider
 )
+from .validation import (
+    ExternalValidationStatus,
+    Evidence,
+    ExternalValidationResult,
+    BaseValidator,
+    WebSearchValidator,
+    KnowledgeGraphValidator,
+    FactCheckValidator,
+    CompositeValidator,
+    create_default_validator,
+    verify_claim,
+    verify_claim_async
+)
 
 __all__ = [
     # Core
@@ -158,4 +171,16 @@ __all__ = [
     "AnthropicProvider",
     "ProviderFactory",
     "create_provider",
+    # Validation
+    "ExternalValidationStatus",
+    "Evidence",
+    "ExternalValidationResult",
+    "BaseValidator",
+    "WebSearchValidator",
+    "KnowledgeGraphValidator",
+    "FactCheckValidator",
+    "CompositeValidator",
+    "create_default_validator",
+    "verify_claim",
+    "verify_claim_async",
 ]
