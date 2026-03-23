@@ -6,9 +6,7 @@ Codegnipy 外部验证模块
 """
 
 import asyncio
-import json
 import re
-import urllib.parse
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
@@ -147,8 +145,6 @@ class WebSearchValidator(BaseValidator):
     
     async def validate_async(self, claim: str, context: Optional["CognitiveContext"] = None) -> ExternalValidationResult:
         """使用 Web 搜索验证声明"""
-        import aiohttp
-        
         if not self.is_available():
             return ExternalValidationResult(
                 claim=claim,
@@ -419,8 +415,6 @@ class KnowledgeGraphValidator(BaseValidator):
     
     async def validate_async(self, claim: str, context: Optional["CognitiveContext"] = None) -> ExternalValidationResult:
         """使用知识图谱验证声明"""
-        import aiohttp
-        
         try:
             # 尝试提取实体
             entities = await self._extract_entities(claim)
