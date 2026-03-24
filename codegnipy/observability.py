@@ -19,7 +19,6 @@ from typing import (
     List,
     Optional,
     TypeVar,
-    Union,
 )
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -521,8 +520,8 @@ class OpenTelemetryExporter:
     def _check_opentelemetry(self) -> bool:
         """检查 OpenTelemetry 是否可用"""
         try:
-            import opentelemetry
-            return True
+            import importlib.util
+            return importlib.util.find_spec("opentelemetry") is not None
         except ImportError:
             return False
     
@@ -532,13 +531,10 @@ class OpenTelemetryExporter:
             return False
         
         try:
-            from opentelemetry import trace
-            from opentelemetry.sdk.trace import TracerProvider
-            from opentelemetry.sdk.trace.export import BatchSpanProcessor
-            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # noqa: F401
             
-            # 创建导出器
-            otlp_exporter = OTLPSpanExporter(
+            # 创建导出器（验证配置有效）
+            OTLPSpanExporter(
                 endpoint=self.endpoint,
                 headers=self.headers,
             )
@@ -554,11 +550,10 @@ class OpenTelemetryExporter:
             return False
         
         try:
-            from opentelemetry import metrics
-            from opentelemetry.sdk.metrics import MeterProvider
-            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter  # noqa: F401
             
-            otlp_exporter = OTLPMetricExporter(
+            # 创建导出器（验证配置有效）
+            OTLPMetricExporter(
                 endpoint=self.endpoint,
                 headers=self.headers,
             )
@@ -852,7 +847,7 @@ def metered(
                     duration = (time.time() - start_time) * 1000
                     _manager.record_histogram(f"{name}.duration", duration, unit="ms")
                 return result
-            except Exception as e:
+            except Exception:
                 _manager.record_counter(f"{name}.errors")
                 raise
         
@@ -869,7 +864,7 @@ def metered(
                     duration = (time.time() - start_time) * 1000
                     _manager.record_histogram(f"{name}.duration", duration, unit="ms")
                 return result
-            except Exception as e:
+            except Exception:
                 _manager.record_counter(f"{name}.errors")
                 raise
         
