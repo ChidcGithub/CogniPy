@@ -7,7 +7,7 @@ Codegnipy 多提供商支持模块
 import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, AsyncIterator, Iterator, TYPE_CHECKING
+from typing import Optional, List, Dict, Any, AsyncIterator, Iterator, TYPE_CHECKING, cast
 from enum import Enum
 import json
 
@@ -1378,8 +1378,8 @@ class QuantizationConfig:
             )
         
         method_info = self.QUANTIZATION_METHODS[self.method]
-        self.bits = bits or method_info["bits"]
-        self.description = method_info["description"]
+        self.bits: int = bits if bits is not None else cast(int, method_info["bits"])
+        self.description = str(method_info["description"])
         self.group_size = group_size
         self.activation_bits = activation_bits
     

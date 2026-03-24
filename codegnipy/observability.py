@@ -168,7 +168,7 @@ class CognitiveLogger:
         **kwargs
     ) -> str:
         """格式化日志消息"""
-        log_data = {
+        log_data: Dict[str, Any] = {
             "level": level.value,
             "logger": self.name,
             "message": message,
